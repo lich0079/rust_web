@@ -1,39 +1,37 @@
-use actix_web::{get, web, App, HttpServer, Responder};
-use actix_web_prom::PrometheusMetricsBuilder;
+#[macro_use]
+extern crate log;
+
+
 use prometheus::Gauge;
 use systemstat::{Platform, System};
-use dashmap::DashMap;
+// use dashmap::DashMap;
+
+use log4rs;
 
 use std::thread;
 use std::time::Duration;
 
-#[get("/")]
-async fn index() -> impl Responder {
-    "Hello, World!"
-}
+mod app;
+pub use app::utils::metrics::PROMETHEUS;
 
-#[get("/hello/{name}")]
-async fn hello(name: web::Path<String>) -> impl Responder {
-    format!("Hello {}!", &name)
-}
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let sys = System::new();
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
-    let prometheus = PrometheusMetricsBuilder::new("api")
-        .endpoint("/metrics")
-        .build()
-        .unwrap();
+    info!("booting up");
+    
+    let sys = System::new();
 
     let cpu_usage = Gauge::new("cpu_usage", "Current CPU usage in percent").unwrap();
     let mem_usage = Gauge::new("mem_usage", "Current memory usage in percent").unwrap();
 
-    prometheus
+    PROMETHEUS.read().unwrap()
         .registry
         .register(Box::new(mem_usage.clone()))
         .unwrap();
-    prometheus
+    PROMETHEUS.read().unwrap()
     .registry
     .register(Box::new(cpu_usage.clone()))
     .unwrap();
@@ -55,13 +53,6 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
-    HttpServer::new(move || {
-        App::new()
-            .wrap(prometheus.clone())
-            .service(index)
-            .service(hello)
-    })
-    .bind(("127.0.0.1", 4000))?
-    .run()
-    .await
+    let app = app::App::new();
+    app.start().await
 }
