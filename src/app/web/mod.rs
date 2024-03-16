@@ -1,5 +1,5 @@
-use actix_web::{get, web, App, HttpServer, Responder, dev::Server};
-pub use super::utils::metrics::PROMETHEUS;
+use actix_web::{get, web, App, HttpServer, Responder};
+pub use crate::app::utils::metrics::PROMETHEUS;
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -27,7 +27,7 @@ impl WebServer {
                 .service(index)
                 .service(hello)
         })
-        .bind(("127.0.0.1", 4000)).unwrap()
+        .bind(("127.0.0.1", 8080)).unwrap()
         .run().await
     }
 }
