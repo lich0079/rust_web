@@ -26,7 +26,7 @@ appenders:
 root:
   level: info
   appenders:
-    - system
+    - stdout
 
 loggers:
   app::backend::db:
@@ -35,5 +35,5 @@ loggers:
   rust_web::app:
     level: info
     appenders:
-      - roll
+      - stdout
     additive: false

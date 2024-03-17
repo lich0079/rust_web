@@ -4,7 +4,7 @@ extern crate test;
 
 pub fn add_two(mut a: i32) -> i32 {
     for _ in 0..1000000000 {
-        a = a + 2;
+        a += 2;
     }
     a + 2
 }
@@ -28,17 +28,17 @@ mod tests {
 
     fn arc_works() {
         let mut map = Arc::new(Mutex::new(HashMap::new()));
-        let mut realMap = map.lock().unwrap();
+        let mut real_map = map.lock().unwrap();
         for i in 0..1000000 {
-            realMap.insert(i, String::from("xxx {i}"));
+            real_map.insert(i, String::from("xxx {i}"));
         }
     }
 
     fn rc_works() {
         let mut map = Rc::new(Mutex::new(HashMap::new()));
-        let mut realMap = map.lock().unwrap();
+        let mut real_map = map.lock().unwrap();
         for i in 0..1000000 {
-            realMap.insert(i, String::from("xxx {i}"));
+            real_map.insert(i, String::from("xxx {i}"));
         }
     }
 

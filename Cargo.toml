@@ -7,18 +7,38 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.4.0"
+actix-web-prom = "0.8.0"
+# 监控
 prometheus = "0.13.3"
-actix-web-prom = "0.7.0"
 systemstat = "0.2.3"
+# 并发 hashmap
 dashmap = "5.5.3"
+# 日志
 log = "0.4.20"
 log4rs = "1.2.0"
+# 单列模式
 once_cell = "1.18.0"
-crypto-botters = { version = "0.6.0", features = ["binance", "bitflyer", "bybit", "coincheck"] }
+# 交易所客户端
+# crypto-botters = { version = "0.6.0", features = ["binance", "bitflyer", "bybit", "coincheck"] }
+# 序列化
 serde = { version = "1.0.193", features = ["derive"] }
 serde_json = "1.0.108"
 serde_urlencoded = { version = "0.7.1", optional = true }
 rust_decimal = { version = "1.33.0", features = ["serde-with-str", "serde-with-float"] }
+# 异步
 tokio = "1.36.0"
 crossbeam = "0.8.4"
 futures = "0.3.30"
+async-std = { version = "1.12.0", features = ["attributes", "tokio1"] }
+# http-client
+reqwest = { version = "0.12.4", features = ["blocking", "json"] }
+# 解决 错误上抛
+anyhow = "1.0.81"
+# 配置
+toml = "0.8.11"
+
+ctrlc = "3.3.0"
+#  cargo clippy 检查代码 错误 & 优化
+clippy = "0.0.302"
+
+

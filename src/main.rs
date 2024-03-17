@@ -1,16 +1,21 @@
 #[macro_use]
 extern crate log;
 
-use log4rs;
-
 mod app;
 
-
+#[deny(clippy::cast_possible_truncation)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     info!("booting up");
+
+    // 注册 Ctrl+C 信号处理器
+    ctrlc::set_handler(move || {
+        // 设置 running 变量为 false，表示程序应该退出
+        info!("ctrlc::set_handler");
+        std::process::exit(0);
+    }).expect("Error setting Ctrl-C handler");
 
     app::schedule::scheduler_start();
 

@@ -1,0 +1,32 @@
+ip = '127.0.0.1'
+
+[keys]
+github = 'xxxxxxxxxxxxxxxxx'
+travis = 'yyyyyyyyyyyyyyyyy'
+
+[settings]
+trade_open_strategy = 'grid'
+quote_coin = 'USDT'
+coin_pairs = 'BTC/USDT,ETH/USDT,DYDX/USDT,SOL/USDT,FIL/USDT,LINK/USDT,LRC/USDT,MATIC/USDT,ALGO/USDT,CELO/USDT,CFX/USDT,DOT/USDT,FTM/USDT,NEO/USDT,SAND/USDT,XRP/USDT,ACH/USDT,OP/USDT,EOS/USDT,GMX/USDT,EGLD/USDT,ONE/USDT,AVAX/USDT,ARB/USDT,APE/USDT,LTC/USDT,LDO/USDT,ICP/USDT,SUI/USDT,DOGE/USDT,GRT/USDT,APT/USDT,IMX/USDT,CVX/USDT,FXS/USDT,FLOW/USDT,ENS/USDT,VIC/USDT,ADA/USDT,BLUR/USDT,BAKE/USDT,FRONT/USDT,UNI/USDT'
+total_money_per_symbol = 3000
+max_symbol_order_count_per_day = 12
+sleep_seconds = 30
+magic_9_buy_signal_min_num = 'BTC/USDT:6,ETH/USDT:6,SOL/USDT:6,FIL/USDT:6,CAKE/USDT:6,AVAX/USDT:6,ALGO/USDT:6'
+magic_9_default_stop_loss_percent = 0.9
+magic_9_stop_loss_percent = 'BTC/USDT:20,ETH/USDT:20,DYDX/USDT:20,SOL/USDT:20,FIL/USDT:20,LINK/USDT:20,LRC/USDT:20,LTC/USDT:20,MATIC/USDT:20,DOT/USDT:20,SAND/USDT:20,NEO/USDT:20,OP/USDT:20'
+magic_9_watch_remain_times = 'BTC/USDT:12'
+bolling_param = 49
+symtem_open_auto_coins_picker = true
+auto_coins_picker_push_picker_result = false
+auto_coins_picker_top = 3
+auto_coins_picker_min_quote_volume_24h = 10000000
+auto_coins_picker_min_price_increase_1_month = 1.10
+auto_coins_picker_max_price_increase_1_month = 1.21
+auto_coins_picker_pick_strategy = 'ma_up_trend_picker'
+auto_coins_picker_money_per_order = 600
+
+magic_9_open_5_min_buy_signal = true
+magic_9_open_5_min_sell_signal = true
+
+grid_money_per_order = 1600
+grid_order_book_max_length = 'BTC/USDT:10,ETH/USDT:10,LINK/USDT:10,SOL/USDT:30,FIL/USDT:6,LRC/USDT:10,MATIC/USDT:10,OP/USDT:10,ALGO/USDT:6,SAND/USDT:4,XRP/USDT:0,FTM/USDT:6,DOT/USDT:6,DYDX/USDT:10,CELO/USDT:10,CFX/USDT:6,EGLD/USDT:6,ACH/USDT:10,FTT/USDT:0,ARB/USDT:10,VIC/USDT:0,XRP/USDT:0,DOGE/USDT:3,AVAX/USDT:10,ONE/USDT:10,UNI/USDT:10,EOS/USDT:0,NEO/USDT:6'
