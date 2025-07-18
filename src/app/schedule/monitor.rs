@@ -29,13 +29,13 @@ pub fn monitor() {
                     mem_usage.set(pourcentage_used);
                 }
                 Err(x) => println!("\nMemory: error: {}", x),
-            }
+            };
             match sys.load_average() {
                 Ok(loadavg) => {
                     cpu_usage.set(loadavg.one as f64);
                 }
                 Err(x) => println!("\nLoad average: error: {}", x)
-            }
+            };
         }
     });
     

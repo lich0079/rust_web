@@ -4,13 +4,14 @@ use crate::app::exchange::binance;
 
 pub async fn find_ma_up_trend_coins() -> Result<bool> {
 
-    let symbols = binance::get_symbols().await?;
-    info!("get_symbols size {}", symbols.len());
+    let symbols = vec![
+        "BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT",
+        "DOGEUSDT",
+    ];
 
     for symbol in symbols {
-        match binance::get_klines(&symbol).await {
+        match binance::get_klines_v3(&symbol, "1d", 30).await {
             Ok(klines) => {
-                // let klines = binance::get_klines(&symbol).await?;
                 if klines.len() < 30 {
                     info!("klines not 30d {}", symbol);
                     continue;
@@ -39,6 +40,8 @@ pub async fn find_ma_up_trend_coins() -> Result<bool> {
                 error!("get_ticker error, {}", e)
             },
         };
+
+        
     }
     Ok(true)
 }

@@ -4,6 +4,7 @@ use super::ExchangeInfo;
 use super::Kline;
 use super::Ticker;
 
+/// get_symbols
 pub async fn get_symbols () -> Result<Vec<String>> {
     let body = reqwest::get("https://api.binance.com/api/v3/exchangeInfo")
     .await?
@@ -42,4 +43,27 @@ pub async fn get_ticker (name : &str) -> Result<Ticker> {
     let ticker: Ticker = serde_json::from_str(&body)?;
 
     Ok(ticker)
+}
+
+/*
+Supported kline intervals 
+seconds	1s
+minutes	1m, 3m, 5m, 15m, 30m
+hours	1h, 2h, 4h, 6h, 8h, 12h
+days	1d, 3d
+weeks	1w
+months	1M
+
+limit	INT	NO	Default: 500; Maximum: 1000.
+*/
+pub async fn get_klines_v3 (name : &str, interval : &str, limit : u32) -> Result<Vec<Kline>> {
+    // "symbol": symbol, "interval" : "1d", "limit" : "30"
+    let body = reqwest::get(format!("https://api.binance.com/api/v3/klines?symbol={}&interval={}&limit={}", name, interval, limit))
+    .await?
+    .text()
+    .await?;
+
+    let klines: Vec<Kline> = serde_json::from_str(&body)?;
+
+    Ok(klines)
 }

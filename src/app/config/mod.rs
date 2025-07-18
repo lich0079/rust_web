@@ -20,29 +20,10 @@ pub struct Keys {
 #[derive(Debug)]
 #[derive(Deserialize)]
 pub struct Settings {
-    pub trade_open_strategy: String,
-    pub quote_coin: String,
-    pub coin_pairs: String,
-    pub total_money_per_symbol: u32,
-    pub max_symbol_order_count_per_day: u32,
-    pub sleep_seconds: u32,
-    pub magic_9_buy_signal_min_num: String,
-    pub magic_9_default_stop_loss_percent: f32,
-    pub magic_9_stop_loss_percent: String,
-    pub magic_9_watch_remain_times: String,
-    pub bolling_param: u32,
-    pub symtem_open_auto_coins_picker: bool,
-    pub auto_coins_picker_push_picker_result: bool,
-    pub auto_coins_picker_top: u32,
-    pub auto_coins_picker_min_quote_volume_24h: u32,
-    pub auto_coins_picker_min_price_increase_1_month: f32,
-    pub auto_coins_picker_max_price_increase_1_month: f32,
-    pub auto_coins_picker_pick_strategy: String,
-    pub auto_coins_picker_money_per_order: u32,
-    pub magic_9_open_5_min_buy_signal: bool,
-    pub magic_9_open_5_min_sell_signal: bool,
-    pub grid_money_per_order: u32,
-    pub grid_order_book_max_length: String,
+    pub lark_bot_webhook: String,
+    pub lark_bot_webhook_1w: String,
+    pub lark_bot_webhook_1d: String,
+    pub lark_bot_webhook_4h: String,
 }
 
 static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {

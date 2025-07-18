@@ -2,36 +2,49 @@ use std::thread;
 use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
-use crate::app::config::config;
-use crate::app::trading::find;
+use crate::app::arh999;
+use crate::app::trading::crossover;
 mod monitor;
 
-async fn job12h() -> Result<bool> {
-    info!("开始-12h-选股任务");
-    let symtem_open_auto_coins_picker = config().settings.symtem_open_auto_coins_picker;
-    let pick_strategy = config().settings.auto_coins_picker_pick_strategy.to_string();
-    if symtem_open_auto_coins_picker && pick_strategy == "ma_up_trend_picker" {
-        match find::find_ma_up_trend_coins().await {
-            Ok(r) => {
-                info!("{}", r);
-            },
-            Err(e) => {
-                info!("{}", e);
-            }
+async fn job8h() -> Result<bool> {
+    info!("job8h");
+
+    match crossover::find_crossover("1d").await {
+        Ok(r) => {
+        },
+        Err(e) => {
+            error!("find_crossover 1d {}", e);
         }
-    }
+    };
 
     Ok(true)
 }
 
 async fn job24h() -> Result<bool> {
-    info!("job24h mock");
-    
+    info!("job24h");
+    match crossover::find_crossover("1w").await {
+    Ok(r) => {
+    },
+    Err(e) => {
+        error!("find_crossover 1w {}", e);
+    }
+    };
+
+    let _ = arh999::get_index().await?;
+
     Ok(true)
 }
 
 async fn job1h() -> Result<bool> {
-    info!("job1h mock");
+    info!("job1h");
+
+    match crossover::find_crossover("4h").await {
+        Ok(r) => {
+        },
+        Err(e) => {
+            error!("find_crossover 4h {}", e);
+        }
+    };
 
     Ok(true)
 }
@@ -41,12 +54,11 @@ pub fn scheduler_start() {
     monitor::monitor();
 
     tokio::spawn(async move {
-        let mut last_exeute_12h_time :u128 = 0;
+        let mut last_exeute_8h_time :u128 = 0;
         let mut last_exeute_24h_time :u128 = 0;
         let mut last_exeute_1h_time :u128 = 0;
         
         loop {
-            // info!("scheduler loop");
             let duration_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH).expect("get duration_since_epoch fail");
             let now_ms = duration_since_epoch.as_millis();
             if now_ms - last_exeute_1h_time > 1000 * 3600 {
@@ -54,34 +66,33 @@ pub fn scheduler_start() {
                 match f.await {
                     Ok(_) => {},
                     Err(e) => {
-                        error!("err {}", e)
+                        error!("job1h err {:?}", e)
                     },
-                }
+                };
                 last_exeute_1h_time = now_ms;
             }
-            if now_ms - last_exeute_12h_time > 1000 * 12 * 3600 {
-                let f = job12h();
+            if now_ms - last_exeute_8h_time > 1000 * 8 * 3600 {
+                let f = job8h();
                 match f.await {
                     Ok(_) => {},
                     Err(e) => {
-                        error!("err {}", e)
+                        error!("job8h err {:?}", e)
                     },
-                }
-                last_exeute_12h_time = now_ms;
+                };
+                last_exeute_8h_time = now_ms;
             }
             if now_ms - last_exeute_24h_time > 1000 * 24 * 3600 {
                 let f = job24h();
                 match f.await {
                     Ok(_) => {},
                     Err(e) => {
-                        error!("err {}", e)
+                        error!("job24h err {}", e)
                     },
-                }
+                };
                 last_exeute_24h_time = now_ms;
             }
 
-            thread::sleep(Duration::from_millis(500));
+            thread::sleep(Duration::from_millis(60000));
         }
     });
-    // find_coins::find_breakout_coins();
 }

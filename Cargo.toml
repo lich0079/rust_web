@@ -40,5 +40,9 @@ toml = "0.8.11"
 ctrlc = "3.3.0"
 #  cargo clippy 检查代码 错误 & 优化
 clippy = "0.0.302"
-
-
+# 技术分析（Technical Analysis)
+ta = "0.4"
+# 绘图
+plotters = "0.3"
+# 时间处理
+chrono = "0.4"

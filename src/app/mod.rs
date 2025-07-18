@@ -6,6 +6,8 @@ pub mod schedule;
 pub mod exchange;
 pub mod config;
 pub mod trading;
+pub mod lark;
+pub mod arh999;
 
 
 pub struct App {

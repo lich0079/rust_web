@@ -3,12 +3,18 @@ extern crate log;
 
 mod app;
 
+pub use app::*;
+
 #[deny(clippy::cast_possible_truncation)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     info!("booting up");
+
+    info!("booting up {}", "可厉害".len());
+
+    info!("booting up {}", "可厉害".chars().count());
 
     // 注册 Ctrl+C 信号处理器
     ctrlc::set_handler(move || {
