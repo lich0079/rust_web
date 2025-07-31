@@ -44,7 +44,7 @@ pub async fn find_crossover(interval : &str) -> Result<bool> {
     let formatted_date = Local::now().format("%Y-%m-%d").to_string();
 
     let symbols = vec![
-        "BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "BNBUSDT",
+        "BTCUSDT", "ETHUSDT",
         // "BTCUSDT",
     ];
 
@@ -56,6 +56,8 @@ pub async fn find_crossover(interval : &str) -> Result<bool> {
                 // info!("macd_line  {} {:?}", symbol, macd_line);
                 // info!("signal_line  {} {:?}", symbol, signal_line);
                 // info!("histogram_line  {} {:?}", symbol, histogram_line);
+
+                let _ = check_klines_trend(&klines, &symbol, &interval).await?;
 
                 let macd_chart_name = format!("macd_chart_{}_{}_{}", interval, symbol, formatted_date);
                 let found = check_crossover(&histogram_line, &symbol, &interval).await?;
@@ -81,6 +83,65 @@ pub async fn find_crossover(interval : &str) -> Result<bool> {
 
     }
     Ok(true)
+}
+
+async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> Result<bool>  {
+    let count = 10;
+    let klines_last = if klines.len() <= count { klines } else { &klines[klines.len() - count..] };
+
+    // info!("{} {} check_klines_trend  {:?} ns", symbol, interval, klines_last);
+
+    let len = klines_last.len();
+    let mut rise_count = 0;
+    for i in (1..len).rev() {
+        let cur = &klines_last[i];
+        let prev = &klines_last[i-1];
+        let cur_high: f64 = cur.2.parse().unwrap();
+        let cur_low: f64 = cur.3.parse().unwrap();
+        let prev_high: f64 = prev.2.parse().unwrap();
+        let prev_low: f64 = prev.3.parse().unwrap();
+
+        if cur_high > prev_high && cur_low > prev_low {
+            rise_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    if rise_count > 0 {
+        let msg =  format!("{} {} kline 出现连续上升趋势, {}", symbol, interval, rise_count);
+        let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
+        if ret_msg != "success" {
+            error!("send_msg resp {}", ret_msg);
+        }
+        return Ok(true);
+    }
+
+    let mut fall_count = 0;
+    for i in (1..len).rev() {
+        let cur = &klines_last[i];
+        let prev = &klines_last[i-1];
+        let cur_high: f64 = cur.2.parse().unwrap();
+        let cur_low: f64 = cur.3.parse().unwrap();
+        let prev_high: f64 = prev.2.parse().unwrap();
+        let prev_low: f64 = prev.3.parse().unwrap();
+
+        if cur_high < prev_high && cur_low < prev_low {
+            fall_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    if fall_count > 0 {
+        let msg =  format!("{} {} kline 出现连续下降趋势, {}", symbol, interval, fall_count);
+        let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
+        if ret_msg != "success" {
+            error!("send_msg resp {}", ret_msg);
+        }
+        return Ok(true);
+    }
+    return Ok(false);
 }
 
 async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -> Result<bool> {

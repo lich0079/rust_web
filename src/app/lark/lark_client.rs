@@ -12,7 +12,7 @@ pub struct Response {
 }
 
 // https://open.larksuite.com/document/client-docs/bot-v3/add-custom-bot#f62e72d5
-pub async fn send_msg (msg: &String, webook: &str) -> Result<String> {
+pub async fn send_msg (msg: &str, webook: &str) -> Result<String> {
 
     // 构建JSON请求体
     // "request example, <at user_id=\"all\">所有人</at> "
@@ -25,7 +25,7 @@ pub async fn send_msg (msg: &String, webook: &str) -> Result<String> {
     let res = client.post(url).json(&request_body).send().await?;
 
     let resp: Response = serde_json::from_str(&res.text().await?)?;
-
+    info!("send_msg {}", msg);
     Ok(resp.msg)
 }
 

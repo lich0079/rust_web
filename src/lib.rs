@@ -1,6 +1,6 @@
 // #![feature(test)]
 
-extern crate test;
+// extern crate test;
 
 pub fn add_two(mut a: i32) -> i32 {
     for _ in 0..1000000000 {

@@ -55,8 +55,8 @@ pub mod binance;
     pub struct Kline (
         u64,
         String,
-        String,
-        String,
+        pub String,
+        pub String,
         pub String,
         String,
         u64,
