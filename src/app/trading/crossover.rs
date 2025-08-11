@@ -45,8 +45,6 @@ fn check_macd_trend(histogram_line: &[f64]) -> String {
     let count = 20;
     let histogram_last = if histogram_line.len() <= count { histogram_line } else { &histogram_line[histogram_line.len() - count..] };
 
-    // info!("{} {} check_klines_trend  {:?} ns", symbol, interval, klines_last);
-
     let len = histogram_last.len();
     let mut rise_count = 0;
     for i in (1..len).rev() {
@@ -131,10 +129,8 @@ pub async fn find_crossover(interval : &str) -> Result<bool> {
 }
 
 async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> Result<bool>  {
-    let count = 10;
+    let count = 30;
     let klines_last = if klines.len() <= count { klines } else { &klines[klines.len() - count..] };
-
-    // info!("{} {} check_klines_trend  {:?} ns", symbol, interval, klines_last);
 
     let len = klines_last.len();
     let mut rise_count = 0;
@@ -154,7 +150,7 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     }
 
     if rise_count > 0 {
-        let msg =  format!("{} {} kline 出现连续上升趋势, {}", symbol, interval, rise_count);
+        let msg =  format!("{} {} kline 出现 {} 根连续上升趋势 {}", symbol, interval, rise_count, check_high_9_trend(klines_last));
         let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
         if ret_msg != "success" {
             error!("send_msg resp {}", ret_msg);
@@ -179,7 +175,7 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     }
 
     if fall_count > 0 {
-        let msg =  format!("{} {} kline 出现连续下降趋势, {}", symbol, interval, fall_count);
+        let msg =  format!("{} {} kline 出现 {} 根连续下降趋势 {}", symbol, interval, fall_count, check_high_9_trend(klines_last));
         let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
         if ret_msg != "success" {
             error!("send_msg resp {}", ret_msg);
@@ -187,6 +183,56 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
         return Ok(true);
     }
     return Ok(false);
+}
+
+fn check_high_9_trend(klines: &[Kline]) -> String {
+
+    let mut return_msg = String::new();
+
+    let len = klines.len();
+    let mut result: [i32; 30] = [0; 30];
+    for i in 5..len {
+        let cur = &klines[i];
+        let prev = &klines[i-4];
+        let cur_close: f64 = cur.4.parse().unwrap();
+        let prev_close: f64 = prev.4.parse().unwrap();
+
+        let p = result[i-1];
+        if cur_close > prev_close {
+            let cur1_close: f64 = klines[i-1].4.parse().unwrap();
+            let prev1_close: f64 = klines[i-5].4.parse().unwrap();
+            if p > 0 {
+                // 趋势在连续
+                result[i] = p + 1;
+            } else if cur1_close <= prev1_close {
+                // 第一个点需要满足的条件
+                result[i] = 1;
+            } else {
+                result[i] = 0;
+            }
+        } else if cur_close < prev_close {
+            let cur1_close: f64 = klines[i-1].4.parse().unwrap();
+            let prev1_close: f64 = klines[i-5].4.parse().unwrap();
+            if p < 0 {
+                // 趋势在连续
+                result[i] = p - 1;
+            } else if cur1_close >= prev1_close {
+                // 第一个点需要满足的条件
+                result[i] = -1;
+            } else {
+                result[i] = 0;
+            }
+        }
+    }
+    let msg =  format!("high_9_trend, {:?} ", result);
+
+    if result[len -1] > 4 {
+        return format!(", 高 {} ", result[len -1]);
+    } else if result[len -1] < -4 {
+        return format!(", 低 {} ", result[len -1]*-1);
+    } else {
+        return return_msg;
+    }
 }
 
 async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -> Result<bool> {
