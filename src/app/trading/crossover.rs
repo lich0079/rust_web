@@ -39,6 +39,51 @@ fn get_trend(symbol: &str, interval: &str, trend: &str) -> String {
     return_msg
 }
 
+fn check_macd_trend(histogram_line: &[f64]) -> String {
+
+    let mut return_msg = String::new();
+    let count = 20;
+    let histogram_last = if histogram_line.len() <= count { histogram_line } else { &histogram_line[histogram_line.len() - count..] };
+
+    // info!("{} {} check_klines_trend  {:?} ns", symbol, interval, klines_last);
+
+    let len = histogram_last.len();
+    let mut rise_count = 0;
+    for i in (1..len).rev() {
+        let cur = &histogram_last[i];
+        let prev = &histogram_last[i-1];
+
+        if cur > prev {
+            rise_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    if rise_count > 0 {
+        let msg =  format!("{} 根连续上升趋势", rise_count);
+        return msg;
+    }
+
+    let mut fall_count = 0;
+    for i in (1..len).rev() {
+        let cur = &histogram_last[i];
+        let prev = &histogram_last[i-1];
+
+        if cur < prev {
+            fall_count += 1;
+        } else {
+            break;
+        }
+    }
+
+    if fall_count > 0 {
+        let msg =  format!("{} 根连续下降趋势", fall_count);
+        return msg;
+    }
+    return_msg
+}
+
 pub async fn find_crossover(interval : &str) -> Result<bool> {
 
     let formatted_date = Local::now().format("%Y-%m-%d").to_string();
@@ -154,9 +199,9 @@ async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -
     let last_n = histogram_line[histogram_line.len() - 5..].to_vec();
     let mut msg = String::new();
     if (last_histogram > 0.0 && prev_histogram <= 0.0) || (prev3_histogram < 0.0 && prev_histogram >= 0.0) {
-        msg =  format!("{} {} MACD 出现金叉, {:?} \n   *\n---\n*{}", symbol, interval, last_n, get_trend(symbol, interval, "出现金叉"));
+        msg =  format!("{} {} MACD 出现金叉, {:?} \n   *\n---\n*{}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "出现金叉"), check_macd_trend(histogram_line));
     } else if (last_histogram < 0.0 && prev_histogram >= 0.0) || (prev3_histogram > 0.0 && prev_histogram <= 0.0) {
-        msg =  format!("{} {} MACD 出现死叉, {:?} \n*  \n---\n   *{}", symbol, interval, last_n, get_trend(symbol, interval, "出现死叉"));
+        msg =  format!("{} {} MACD 出现死叉, {:?} \n*  \n---\n   *{}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "出现死叉"), check_macd_trend(histogram_line));
     }
 
     if msg.len() > 0 {
@@ -169,10 +214,10 @@ async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -
 
     if last_histogram > prev_histogram && prev_histogram > prev3_histogram && prev3_histogram > prev4_histogram {
         // 说明 MACD 线在上升
-        msg =  format!("{} {} MACD 线在上升, {:?} \n    *\n  **\n***{}", symbol, interval, last_n, get_trend(symbol, interval, "在上升"));
+        msg =  format!("{} {} MACD 线在上升, {:?} \n    *\n  **\n***{}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "在上升"), check_macd_trend(histogram_line));
     } else if last_histogram < prev_histogram && prev_histogram < prev3_histogram && prev3_histogram < prev4_histogram {
         // 说明 MACD 线在下降
-        msg =  format!("{} {} MACD 线在下降, {:?} \n*  \n** \n***{}", symbol, interval, last_n, get_trend(symbol, interval, "在下降"));
+        msg =  format!("{} {} MACD 线在下降, {:?} \n*  \n** \n***{}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "在下降"), check_macd_trend(histogram_line));
     }
 
     if msg.len() > 0 {
@@ -186,10 +231,10 @@ async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -
 
     if prev_histogram > last_histogram && prev3_histogram > prev_histogram && prev3_histogram > prev4_histogram
         && prev4_histogram > prev5_histogram && prev5_histogram > 0.0{
-        msg =  format!("{} {} MACD 线可能在顶部反转, {:?} \n   *  \n  *** \n*****{}", symbol, interval, last_n, get_trend(symbol, interval, "可能在顶部反转"));
+        msg =  format!("{} {} MACD 线可能在顶部反转, {:?} \n   *  \n  *** \n*****{}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "可能在顶部反转"), check_macd_trend(histogram_line));
     } else if prev_histogram < last_histogram && prev3_histogram < prev_histogram && prev3_histogram < prev4_histogram
         && prev4_histogram < prev5_histogram && prev3_histogram < 0.0 {
-        msg =  format!("{} {} MACD 线可能在底部反转, {:?} \n*****\n  *** \n   *  {}", symbol, interval, last_n, get_trend(symbol, interval, "可能在底部反转"));
+        msg =  format!("{} {} MACD 线可能在底部反转, {:?} \n*****\n  *** \n   *  {}\n{}", symbol, interval, last_n, get_trend(symbol, interval, "可能在底部反转"), check_macd_trend(histogram_line));
     }
 
     if msg.len() > 0 {

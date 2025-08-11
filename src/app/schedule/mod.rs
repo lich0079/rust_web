@@ -61,7 +61,7 @@ pub fn scheduler_start() {
         loop {
             let duration_since_epoch = SystemTime::now().duration_since(UNIX_EPOCH).expect("get duration_since_epoch fail");
             let now_ms = duration_since_epoch.as_millis();
-            if now_ms - last_exeute_1h_time > 1000 * 3600 {
+            if now_ms - last_exeute_1h_time > 1000 * 4 * 3600 {
                 let f = job1h();
                 match f.await {
                     Ok(_) => {},
