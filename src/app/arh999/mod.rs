@@ -35,7 +35,7 @@ pub async fn get_index () -> Result<String> {
 
         if last.1 < 0.9 {
             let msg = format!("BTC ahr999指数:{}, 最新价格:{}, 指数增长估值:{}, 200日定投成本:{}", last.1, last.2, last.3, last.4);
-            let msg = lark_client::send_msg(&msg, "ww").await?;
+            let msg = lark_client::send_msg_by_interval(&msg, "1d").await?;
             if msg != "success" {
                 error!("send_msg resp {}", msg);
             }
