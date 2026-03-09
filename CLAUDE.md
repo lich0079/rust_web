@@ -2,83 +2,46 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Overview
+## Build & Run Commands
 
-This is a Rust-based cryptocurrency trading analysis and monitoring web service. The application uses Actix-web framework with Prometheus metrics, performs technical analysis on cryptocurrency data from Binance, and sends notifications via Lark (飞书) webhooks.
-
-## Development Commands
-
-### Build and Run
-- **Development build**: `cargo build`
-- **Release build**: `cargo build --release`
-- **Run locally**: `cargo run`
-- **Run in background**: `nohup ./target/release/rust_web >> ./rust_web.log &`
-
-### Code Quality
-- **Linting**: `cargo clippy` (already configured in dependencies)
-- **Testing**: Use standard `cargo test` for unit tests
-- **Check formatting**: `cargo fmt --check`
-
-### Monitoring
-- **Web server**: Runs on `127.0.0.1:8080/`
-- **Metrics endpoint**: `http://127.0.0.1:8080/metrics`
-- **Application logs**: Check `./rust_web.log` for background runs
-- **System logs**: `log/system.log`
-- **Rolling logs**: `log/roll.log`
+```bash
+cargo build --release          # Build release binary
+cargo run                      # Run in development mode
+./start.sh                     # Build release and run with log output to rust_web.log
+cargo clippy                   # Lint / code analysis
+cargo test                     # Run tests (no active test suite currently)
+```
 
 ## Architecture
 
-### Core Components
+This is a Rust cryptocurrency monitoring application that tracks BTC/ETH technical indicators via Binance API and sends alerts to Lark (Feishu) bot webhooks.
 
-1. **Main Application** (`src/main.rs`)
-   - Initializes logging with `log4rs.yaml`
-   - Sets up signal handlers for graceful shutdown
-   - Starts the scheduler and web server
+### Core Flow
 
-2. **App Structure** (`src/app/mod.rs`)
-   - `web`: Actix-web HTTP server and API endpoints
-   - `schedule`: Background task scheduler for periodic analysis
-   - `exchange`: Binance API client for market data
-   - `trading`: Technical analysis and MACD crossover detection
-   - `lark`: Notification system via Lark webhooks
-   - `config`: Configuration management from `config.toml`
-   - `utils`: Prometheus metrics integration
+`main.rs` boots an **actix-web** HTTP server (port 8080) with Prometheus metrics, and spawns a **scheduler** that runs periodic analysis jobs on tokio:
 
-3. **Configuration** (`config.toml`)
-   - Server IP and port settings
-   - API keys and webhook URLs for different time intervals (1w, 1d, 4h)
-   - Use `config::config()` to access configuration globally
+- **1h/8h/24h jobs** (`schedule/mod.rs`) — fetch kline data from Binance, compute MACD crossovers, check price trends, and send alerts
+- Scheduler uses `thread::sleep` in a tokio task with manual interval tracking (not cron-based)
 
-4. **Scheduled Tasks** (`src/app/schedule/mod.rs`)
-   - **1h job**: Analyzes 4h intervals for MACD crossovers
-   - **8h job**: Analyzes 1d intervals for MACD crossovers
-   - **24h job**: Analyzes 1w intervals and ARH999 index
-   - Monitor thread runs continuously for system health
+### Module Map
 
-### Technical Analysis Features
+- **`app/web`** — Actix-web server with `/`, `/hello/{name}`, `/metrics` endpoints
+- **`app/exchange/binance`** — Binance REST API client (`get_klines_v3`, `get_ticker`, `get_symbols`)
+- **`app/trading/crossover`** — MACD calculation (via `ta` crate), crossover detection, kline trend analysis, High-9 counting. Uses a static `TREND_MAP` to track previous trend state
+- **`app/trading/find`** — Additional trading analysis utilities
+- **`app/arh999`** — Fetches BTC ahr999 index from flink1.com API, alerts when index < 0.8
+- **`app/lark/lark_client`** — Lark bot webhook sender. Routes messages to different webhooks by interval (1w/1d/4h/default)
+- **`app/config`** — Loads `config.toml` into a global `Lazy<RwLock<Config>>` singleton
+- **`app/utils/metrics`** — Prometheus metrics integration
 
-- **MACD Crossover Detection**: Identifies bullish/bearish signals using MACD lines (12, 26, 9 parameters)
-- **Trend Analysis**: Detects consecutive rising/falling patterns in k-lines and MACD
-- **High/Low 9 Trend**: Custom indicator for identifying market extremes
-- **Chart Generation**: Creates PNG charts for MACD analysis (using plotters crate)
+### Key Patterns
 
-### Data Flow
+- Global config via `once_cell::Lazy` + `RwLock` — access with `config::config()`
+- Logging via `log` + `log4rs` (configured in `log4rs.yaml`)
+- All external API calls use `reqwest` async client
+- Decimal prices from Binance use `rust_decimal` with `serde` string deserialization
+- Kline struct is a tuple struct matching Binance's array response format (fields accessed by index: `.2` = high, `.3` = low, `.4` = close)
 
-1. Scheduler triggers periodic analysis jobs
-2. Binance client fetches k-line data via `get_klines_v3()`
-3. Technical analysis calculates MACD indicators
-4. Crossover and trend detection algorithms analyze patterns
-5. Lark notifications sent based on configured webhook intervals
-6. Prometheus metrics track application performance
+### Configuration
 
-## Key Implementation Details
-
-- **Concurrent HashMap**: Uses `dashmap` for thread-safe trend state tracking
-- **Async Runtime**: Built on `tokio` with async/await patterns
-- **Error Handling**: Uses `anyhow` for error propagation throughout the application
-- **Decimal Arithmetic**: Uses `rust_decimal` for precise financial calculations
-- **Time Handling**: Uses `chrono` for date/time operations and chart naming
-
-## Testing Strategy
-
-The project includes benchmarking code in `lib.rs` for performance testing of different data structures (HashMap vs Arc<Mutex<>> vs Rc<Mutex<>>). When adding new features, ensure proper error handling and consider the async nature of the application.
+`config.toml` contains Lark webhook IDs and API keys. The `settings.lark_bot_webhook_*` fields map to different alert channels by timeframe.

@@ -95,7 +95,7 @@ pub async fn find_crossover(interval : &str) -> Result<bool> {
         match binance::get_klines_v3(&symbol, interval, 200).await {
             Ok(klines) => {
                 let start = Instant::now();
-                let (macd_line, signal_line, histogram_line) = calculate_macd(&klines);
+                let (macd_line, signal_line, histogram_line) = calculate_macd(&klines)?;
                 // info!("macd_line  {} {:?}", symbol, macd_line);
                 // info!("signal_line  {} {:?}", symbol, signal_line);
                 // info!("histogram_line  {} {:?}", symbol, histogram_line);
@@ -137,10 +137,10 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     for i in (1..len).rev() {
         let cur = &klines_last[i];
         let prev = &klines_last[i-1];
-        let cur_high: f64 = cur.2.parse().unwrap();
-        let cur_low: f64 = cur.3.parse().unwrap();
-        let prev_high: f64 = prev.2.parse().unwrap();
-        let prev_low: f64 = prev.3.parse().unwrap();
+        let cur_high: f64 = cur.2.parse()?;
+        let cur_low: f64 = cur.3.parse()?;
+        let prev_high: f64 = prev.2.parse()?;
+        let prev_low: f64 = prev.3.parse()?;
 
         if cur_high > prev_high && cur_low > prev_low {
             rise_count += 1;
@@ -150,7 +150,7 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     }
 
     if rise_count > 0 {
-        let msg =  format!("{} {} kline 出现 {} 根连续上升趋势 {}", symbol, interval, rise_count, check_high_9_trend(klines_last));
+        let msg =  format!("{} {} kline 出现 {} 根连续上升趋势 {}", symbol, interval, rise_count, check_high_9_trend(klines_last)?);
         let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
         if ret_msg != "success" {
             error!("send_msg resp {}", ret_msg);
@@ -162,10 +162,10 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     for i in (1..len).rev() {
         let cur = &klines_last[i];
         let prev = &klines_last[i-1];
-        let cur_high: f64 = cur.2.parse().unwrap();
-        let cur_low: f64 = cur.3.parse().unwrap();
-        let prev_high: f64 = prev.2.parse().unwrap();
-        let prev_low: f64 = prev.3.parse().unwrap();
+        let cur_high: f64 = cur.2.parse()?;
+        let cur_low: f64 = cur.3.parse()?;
+        let prev_high: f64 = prev.2.parse()?;
+        let prev_low: f64 = prev.3.parse()?;
 
         if cur_high < prev_high && cur_low < prev_low {
             fall_count += 1;
@@ -175,7 +175,7 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     }
 
     if fall_count > 0 {
-        let msg =  format!("{} {} kline 出现 {} 根连续下降趋势 {}", symbol, interval, fall_count, check_high_9_trend(klines_last));
+        let msg =  format!("{} {} kline 出现 {} 根连续下降趋势 {}", symbol, interval, fall_count, check_high_9_trend(klines_last)?);
         let ret_msg = lark_client::send_msg_by_interval(&msg, interval).await?;
         if ret_msg != "success" {
             error!("send_msg resp {}", ret_msg);
@@ -185,22 +185,20 @@ async fn check_klines_trend(klines: &[Kline], symbol: &str, interval: &str) -> R
     return Ok(false);
 }
 
-fn check_high_9_trend(klines: &[Kline]) -> String {
-
-    let mut return_msg = String::new();
+fn check_high_9_trend(klines: &[Kline]) -> Result<String> {
 
     let len = klines.len();
-    let mut result: [i32; 30] = [0; 30];
+    let mut result: Vec<i32> = vec![0; len];
     for i in 5..len {
         let cur = &klines[i];
         let prev = &klines[i-4];
-        let cur_close: f64 = cur.4.parse().unwrap();
-        let prev_close: f64 = prev.4.parse().unwrap();
+        let cur_close: f64 = cur.4.parse()?;
+        let prev_close: f64 = prev.4.parse()?;
 
         let p = result[i-1];
         if cur_close > prev_close {
-            let cur1_close: f64 = klines[i-1].4.parse().unwrap();
-            let prev1_close: f64 = klines[i-5].4.parse().unwrap();
+            let cur1_close: f64 = klines[i-1].4.parse()?;
+            let prev1_close: f64 = klines[i-5].4.parse()?;
             if p > 0 {
                 // 趋势在连续
                 result[i] = p + 1;
@@ -211,8 +209,8 @@ fn check_high_9_trend(klines: &[Kline]) -> String {
                 result[i] = 0;
             }
         } else if cur_close < prev_close {
-            let cur1_close: f64 = klines[i-1].4.parse().unwrap();
-            let prev1_close: f64 = klines[i-5].4.parse().unwrap();
+            let cur1_close: f64 = klines[i-1].4.parse()?;
+            let prev1_close: f64 = klines[i-5].4.parse()?;
             if p < 0 {
                 // 趋势在连续
                 result[i] = p - 1;
@@ -224,18 +222,20 @@ fn check_high_9_trend(klines: &[Kline]) -> String {
             }
         }
     }
-    let msg =  format!("high_9_trend, {:?} ", result);
 
     if result[len -1] > 4 {
-        return format!(", 高 {} ", result[len -1]);
+        return Ok(format!(", 高 {} ", result[len -1]));
     } else if result[len -1] < -4 {
-        return format!(", 低 {} ", result[len -1]*-1);
+        return Ok(format!(", 低 {} ", result[len -1]*-1));
     } else {
-        return return_msg;
+        return Ok(String::new());
     }
 }
 
 async fn check_crossover(histogram_line: &[f64], symbol: &str, interval: &str) -> Result<bool> {
+    if histogram_line.len() < 5 {
+        return Ok(false);
+    }
     let last_histogram = histogram_line[histogram_line.len() - 1];
     let prev_histogram = histogram_line[histogram_line.len() - 2];
     let prev3_histogram = histogram_line[histogram_line.len() - 3];
@@ -368,16 +368,17 @@ fn draw_chart(macd_line: &[f64], signal_line: &[f64], histogram_line: &[f64], ma
     Ok(())
 }
 
-fn calculate_macd(klines: &[Kline]) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
+fn calculate_macd(klines: &[Kline]) -> Result<(Vec<f64>, Vec<f64>, Vec<f64>)> {
     let fast_period = 12;
     let slow_period = 26;
     let signal_period = 9;
-    let mut macd = TaMACD::new(fast_period, slow_period, signal_period).unwrap();
+    let mut macd = TaMACD::new(fast_period, slow_period, signal_period)
+        .map_err(|e| anyhow::anyhow!("{}", e))?;
     let mut macd_results = Vec::new();
 
     // 计算 MACD（需要足够的数据点）
     for kline in klines.iter() {
-        let close: f64 = kline.4.parse().unwrap();
+        let close: f64 = kline.4.parse()?;
         let macd_result = macd.next(close);
         macd_results.push((macd_result.macd, macd_result.signal, macd_result.histogram));
     }
@@ -395,5 +396,5 @@ fn calculate_macd(klines: &[Kline]) -> (Vec<f64>, Vec<f64>, Vec<f64>) {
     let signal_line_last = if signal_line.len() <= count { signal_line } else { signal_line[signal_line.len() - count..].to_vec() };
     let histogram_line_last = if histogram_line.len() <= count { histogram_line } else { histogram_line[histogram_line.len() - count..].to_vec() };
 
-    (macd_line_last, signal_line_last, histogram_line_last)
+    Ok((macd_line_last, signal_line_last, histogram_line_last))
 }

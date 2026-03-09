@@ -1,7 +1,6 @@
 use serde::Deserialize;
 use once_cell::sync::Lazy;
 use std::fs;
-use std::sync::RwLock;
 
 #[derive(Debug)]
 #[derive(Deserialize)]
@@ -26,13 +25,11 @@ pub struct Settings {
     pub lark_bot_webhook_4h: String,
 }
 
-static CONFIG: Lazy<RwLock<Config>> = Lazy::new(|| {
+static CONFIG: Lazy<Config> = Lazy::new(|| {
     let content = fs::read_to_string("config.toml").expect("config.toml read fail");
-    let config: Config = toml::from_str(&content).unwrap();
-    
-    RwLock::new(config)
+    toml::from_str(&content).unwrap()
 });
 
-pub fn config() -> std::sync::RwLockReadGuard<'static, Config> {
-    CONFIG.read().unwrap()
+pub fn config() -> &'static Config {
+    &CONFIG
 }

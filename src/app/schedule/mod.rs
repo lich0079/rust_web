@@ -1,5 +1,3 @@
-use std::thread;
-use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
 use crate::app::arh999;
@@ -38,13 +36,13 @@ async fn job24h() -> Result<bool> {
 async fn job1h() -> Result<bool> {
     info!("job1h");
 
-    match crossover::find_crossover("4h").await {
-        Ok(r) => {
-        },
-        Err(e) => {
-            error!("find_crossover 4h {}", e);
-        }
-    };
+    // match crossover::find_crossover("4h").await {
+    //     Ok(r) => {
+    //     },
+    //     Err(e) => {
+    //         error!("find_crossover 4h {}", e);
+    //     }
+    // };
 
     Ok(true)
 }
@@ -81,7 +79,7 @@ pub fn scheduler_start() {
                 };
                 last_exeute_8h_time = now_ms;
             }
-            if now_ms - last_exeute_24h_time > 1000 * 24 * 3600 {
+            if now_ms - last_exeute_24h_time > 1000 * 12 * 3600 {
                 let f = job24h();
                 match f.await {
                     Ok(_) => {},
@@ -92,7 +90,7 @@ pub fn scheduler_start() {
                 last_exeute_24h_time = now_ms;
             }
 
-            thread::sleep(Duration::from_millis(60000));
+            tokio::time::sleep(tokio::time::Duration::from_millis(60000)).await;
         }
     });
 }

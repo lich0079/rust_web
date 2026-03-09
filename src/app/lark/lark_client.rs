@@ -29,22 +29,19 @@ pub async fn send_msg (msg: &str, webook: &str) -> Result<String> {
     Ok(resp.msg)
 }
 
-pub async fn send_msg_1w (msg: &String) -> Result<String> {
-    let webhook = config().settings.lark_bot_webhook_1w.clone();
-    send_msg(msg,&webhook).await
+pub async fn send_msg_1w (msg: &str) -> Result<String> {
+    send_msg(msg, &config().settings.lark_bot_webhook_1w).await
 }
 
-pub async fn send_msg_1d (msg: &String) -> Result<String> {
-    let webhook = config().settings.lark_bot_webhook_1d.clone();
-    send_msg(msg, &webhook).await
+pub async fn send_msg_1d (msg: &str) -> Result<String> {
+    send_msg(msg, &config().settings.lark_bot_webhook_1d).await
 }
 
-pub async fn send_msg_4h (msg: &String) -> Result<String> {
-    let webhook = config().settings.lark_bot_webhook_4h.clone();
-    send_msg(msg, &webhook).await
+pub async fn send_msg_4h (msg: &str) -> Result<String> {
+    send_msg(msg, &config().settings.lark_bot_webhook_4h).await
 }
 
-pub async fn send_msg_by_interval (msg: &String, interval: &str) -> Result<String> {
+pub async fn send_msg_by_interval (msg: &str, interval: &str) -> Result<String> {
     if interval == "1w" {
         return send_msg_1w(msg).await;
     } else if interval == "1d" {
@@ -52,7 +49,6 @@ pub async fn send_msg_by_interval (msg: &String, interval: &str) -> Result<Strin
     } else if interval == "4h" {
         return send_msg_4h(msg).await;
     } else {
-        let webhook = config().settings.lark_bot_webhook.clone();
-        return send_msg(msg, &webhook).await
+        return send_msg(msg, &config().settings.lark_bot_webhook).await
     }
 }
